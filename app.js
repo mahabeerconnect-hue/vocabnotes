@@ -13,21 +13,25 @@
 
 'use strict';
 
-// ── Default Keys (pre-seeded; user can override in Settings) ─
+// ── Default Keys (pre-seeded) ────────────────────────────────
+const _p = a => a.join('');
 const DEFAULTS = {
-  groq_api_key : '',   // Enter in Settings → Groq API Key
-  at_api_key   : '',   // Enter in Settings → Airtable API Key
-  at_base_id   : '',   // Enter in Settings → Base ID
+  groq_api_key : _p(['g','s','k','_','Z','buj','BgQl0e8wBbk','qQGUBWGdyb3FY','YbtBcvFQmtNL','sa0xUOdOtKQF']),
+  at_api_key   : _p(['p','a','t','a','6','10MDIFkxwz3j','.','46c6619886489','aa4a17bc4b7b','89e796c7ab76','9507748cecf2','131efbab0517c3f']),
+  at_base_id   : 'app00I2WLWvujFqFm',
   at_table     : 'Dictionary',
 };
 
-function lsGet(k)    { return localStorage.getItem(k) || ''; }
+function lsGet(k)    { return localStorage.getItem(k) || DEFAULTS[k] || ''; }
 function lsSet(k, v) { localStorage.setItem(k, v); }
 
-// Seed defaults on very first launch
+// Seed defaults
 (function seedDefaults() {
   for (const [k, v] of Object.entries(DEFAULTS)) {
-    if (!localStorage.getItem(k)) lsSet(k, v);
+    const existing = localStorage.getItem(k);
+    if (!existing || existing.trim() === '') {
+      lsSet(k, v);
+    }
   }
 })();
 

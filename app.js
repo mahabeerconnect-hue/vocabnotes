@@ -87,6 +87,38 @@ const idb = {
   },
 };
 
+// ── Sentence Parser (handles newlines, numbered lists, JSON) ─
+function parseSentences(raw) {
+  if (!raw) return [];
+  if (Array.isArray(raw)) {
+    return raw
+      .filter(Boolean)
+      .map(s => String(s).replace(/^\d+[\.\)]\s*/, '').trim())
+      .filter(Boolean);
+  }
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+          return parsed
+            .filter(Boolean)
+            .map(s => String(s).replace(/^\d+[\.\)]\s*/, '').trim())
+            .filter(Boolean);
+        }
+      } catch (_) {}
+    }
+    return trimmed
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .map(line => line.replace(/^\d+[\.\)]\s*/, '').trim())
+      .filter(line => line.length > 0);
+  }
+  return [];
+}
+
 // ── Airtable Service ─────────────────────────────────────────
 const AT = {
   get baseUrl() {
@@ -104,8 +136,7 @@ const AT = {
   // Convert Airtable record → local VocabWord object
   fromRecord(rec) {
     const f = rec.fields;
-    let sentences = [];
-    try { sentences = JSON.parse(f.sentence || '[]'); } catch { sentences = []; }
+    const sentences = parseSentences(f.sentence || f.Sentence || f.sentences || '');
     return {
       id          : rec.id,                          // Airtable recXXX id
       word        : f.Word        || '',
@@ -119,11 +150,15 @@ const AT = {
 
   // Convert local VocabWord → Airtable fields object
   toFields(w) {
+    const sList = parseSentences(w.sentences);
+    const formattedSentences = sList.length > 0
+      ? sList.map((s, i) => `${i + 1}. ${s}`).join('\n')
+      : '';
     return {
       Word        : w.word,
       ShortMeaning: w.partOfSpeech,
       Meaning     : w.hindiMeaning,
-      sentence    : JSON.stringify(w.sentences),
+      sentence    : formattedSentences,
       Status      : w.isReviewed ? 'Done' : 'Todo',
     };
   },
@@ -396,11 +431,21 @@ async function deleteWord(id) {
 function openDetail(id) {
   const w = allWords.find(x => x.id === id);
   if (!w) return;
+  w.sentences = parseSentences(w.sentences);
   currentWord = w;
   stopSpeech();
 
   $('#detail-nav-title').textContent = w.word;
   updateReviewedIcon(w.isReviewed);
+
+  const sentencesHtml = (w.sentences && w.sentences.length > 0)
+    ? w.sentences.map((s, i) => `
+      <div class="sentence-card" id="sentence-${i}">
+        <div class="sentence-num">${i+1}</div>
+        <div class="sentence-text">${escHtml(s)}</div>
+        <button class="speak-btn" data-idx="${i}" aria-label="Speak sentence ${i+1}">${speakerIcon()}</button>
+      </div>`).join('')
+    : `<div style="color:var(--text2);font-size:14px;padding:12px 14px;background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);">No example sentences found for this word.</div>`;
 
   const content = $('#detail-content');
   content.innerHTML = `
@@ -421,12 +466,7 @@ function openDetail(id) {
     </div>
 
     <div class="sentences-label">Example Sentences</div>
-    ${w.sentences.map((s, i) => `
-      <div class="sentence-card" id="sentence-${i}">
-        <div class="sentence-num">${i+1}</div>
-        <div class="sentence-text">${escHtml(s)}</div>
-        <button class="speak-btn" data-idx="${i}" aria-label="Speak sentence ${i+1}">${speakerIcon()}</button>
-      </div>`).join('')}`;
+    ${sentencesHtml}`;
 
   $('#speak-word-btn').addEventListener('click', () => speakText(w.word, -1));
   content.querySelectorAll('.speak-btn[data-idx]').forEach(btn => {
@@ -570,6 +610,10 @@ async function syncFromAirtable(silent = false) {
     for (const w of remote) await idb.put(w);
     allWords = remote;
     applySearch();
+    if (currentWord && screens.detail.classList.contains('active')) {
+      const refreshed = allWords.find(x => x.id === currentWord.id);
+      if (refreshed) openDetail(refreshed.id);
+    }
     setSyncStatus('');
     if (!silent) showToast(`✅ Synced ${remote.length} word${remote.length !== 1 ? 's' : ''}`);
   } catch (err) {
@@ -685,7 +729,10 @@ async function init() {
   await openDB();
 
   // 1. Show cached words immediately for fast start
-  allWords = await idb.all();
+  allWords = (await idb.all()).map(w => ({
+    ...w,
+    sentences: parseSentences(w.sentences),
+  }));
   applySearch();
 
   // 2. Wire up UI

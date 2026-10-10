@@ -1,4 +1,4 @@
-const CACHE = 'vocabnotes-v1';
+const CACHE = 'vocabnotes-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -26,7 +26,7 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   // Network-first for API calls, cache-first for assets
-  if (e.request.url.includes('api.groq.com') || e.request.url.includes('fonts.g')) {
+  if (e.request.url.includes('api.groq.com') || e.request.url.includes('api.airtable.com') || e.request.url.includes('fonts.g')) {
     e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
     return;
   }

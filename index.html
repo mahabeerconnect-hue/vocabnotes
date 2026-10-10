@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="VocabNotes" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <meta name="description" content="Personal vocabulary builder powered by AI. Learn English words with Hindi meanings and example sentences." />
+  <title>VocabNotes</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div id="app">
+
+    <!-- ========== WORD LIST SCREEN ========== -->
+    <div id="screen-list" class="screen active">
+      <div class="nav-bar glass">
+        <button class="icon-btn" id="btn-settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+        <h1 class="nav-title">VocabNotes</h1>
+        <button class="icon-btn accent" id="btn-add" aria-label="Add word">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+
+      <div class="search-bar-wrap">
+        <div class="search-bar">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="search" id="search-input" placeholder="Search words…" autocomplete="off" />
+        </div>
+        <div id="sync-status" class="sync-status hidden"></div>
+      </div>
+
+      <div id="word-list-container">
+        <div id="empty-state" class="empty-state hidden">
+          <div class="empty-icon">📖</div>
+          <h2>No Words Yet</h2>
+          <p>Tap <strong>+</strong> to start building your vocabulary.</p>
+        </div>
+        <ul id="word-list" role="list"></ul>
+      </div>
+    </div>
+
+    <!-- ========== ADD WORD SCREEN ========== -->
+    <div id="screen-add" class="screen">
+      <div class="nav-bar glass">
+        <button class="icon-btn" id="btn-add-back" aria-label="Cancel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1 class="nav-title">Add Word</h1>
+        <div style="width:40px"></div>
+      </div>
+
+      <div class="screen-content center-content">
+        <div class="add-hero">
+          <div class="add-hero-icon">✨</div>
+          <h2>Add a New Word</h2>
+          <p>Enter any English word and AI will fetch<br>its meaning and save to Airtable.</p>
+        </div>
+
+        <div class="card input-card">
+          <div class="input-row">
+            <span class="input-prefix">Aa</span>
+            <input type="text" id="word-input" placeholder="e.g. perseverance"
+              autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+            <button class="clear-btn hidden" id="clear-input" aria-label="Clear">✕</button>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="btn-fetch">
+          <span id="btn-fetch-text">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Fetch &amp; Save
+          </span>
+          <span id="btn-fetch-loading" class="hidden">
+            <span class="spinner"></span> Fetching…
+          </span>
+        </button>
+
+        <div id="add-error" class="error-banner hidden"></div>
+      </div>
+    </div>
+
+    <!-- ========== WORD DETAIL SCREEN ========== -->
+    <div id="screen-detail" class="screen">
+      <div class="nav-bar glass">
+        <button class="icon-btn" id="btn-detail-back" aria-label="Back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1 class="nav-title" id="detail-nav-title">Word</h1>
+        <button class="icon-btn" id="btn-toggle-reviewed" aria-label="Mark as reviewed">
+          <svg id="reviewed-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </button>
+      </div>
+      <div class="screen-content" id="detail-content"></div>
+    </div>
+
+    <!-- ========== SETTINGS SCREEN ========== -->
+    <div id="screen-settings" class="screen">
+      <div class="nav-bar glass">
+        <button class="icon-btn" id="btn-settings-back" aria-label="Back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1 class="nav-title">Settings</h1>
+        <div style="width:40px"></div>
+      </div>
+
+      <div class="screen-content">
+
+        <!-- Groq API Key -->
+        <div class="section-label">GROQ API KEY</div>
+        <div class="card settings-card" id="groq-card">
+          <div class="settings-row">
+            <svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <input type="password" id="groq-key-input" placeholder="gsk_…"
+              autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+            <button class="icon-btn small" id="toggle-groq-visibility" aria-label="Show/hide">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div id="groq-status" class="key-status hidden">
+            <div class="key-status-row">
+              <span class="status-dot"></span><span>Groq key saved</span>
+              <div class="key-actions">
+                <button class="text-btn danger" id="btn-clear-groq">Clear</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Airtable Config -->
+        <div class="section-label">AIRTABLE DATABASE</div>
+        <div class="card">
+
+          <!-- API Key -->
+          <div class="settings-row" style="border-bottom:1px solid var(--card-border)">
+            <svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="at-key-input" placeholder="Airtable API Key"
+              autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+            <button class="icon-btn small" id="toggle-at-visibility" aria-label="Show/hide">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+
+          <!-- Base ID -->
+          <div class="settings-row" style="border-bottom:1px solid var(--card-border)">
+            <svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            <input type="text" id="at-base-input" placeholder="Base ID (appXXXXXX)"
+              autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          </div>
+
+          <!-- Table Name -->
+          <div class="settings-row">
+            <svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+            <input type="text" id="at-table-input" placeholder="Table name (e.g. Dictionary)"
+              autocomplete="off" spellcheck="false" />
+          </div>
+        </div>
+
+        <div class="airtable-actions">
+          <button class="btn-secondary" id="btn-save-airtable">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="16" height="16"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save Config
+          </button>
+          <button class="btn-secondary outline" id="btn-sync-now">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="16" height="16"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Sync Now
+          </button>
+        </div>
+        <p class="settings-note" id="at-config-status"></p>
+
+        <!-- Airtable Field Map Info -->
+        <div class="section-label">FIELD MAPPING</div>
+        <div class="card">
+          <div class="about-row"><span>Word</span><span class="at-field">Word</span></div>
+          <div class="divider-line"></div>
+          <div class="about-row"><span>Part of Speech</span><span class="at-field">ShortMeaning</span></div>
+          <div class="divider-line"></div>
+          <div class="about-row"><span>Hindi Meaning</span><span class="at-field">Meaning</span></div>
+          <div class="divider-line"></div>
+          <div class="about-row"><span>Sentences (JSON)</span><span class="at-field">sentence</span></div>
+          <div class="divider-line"></div>
+          <div class="about-row"><span>Reviewed</span><span class="at-field">Status → Done / Todo</span></div>
+        </div>
+
+        <!-- Install guide -->
+        <div class="section-label">INSTALL ON iPHONE</div>
+        <div class="card">
+          <div class="step-row"><span class="step-num">1</span><span>Open this page in <strong>Safari</strong></span></div>
+          <div class="divider-line"></div>
+          <div class="step-row"><span class="step-num">2</span><span>Tap the <strong>Share</strong> button (↑)</span></div>
+          <div class="divider-line"></div>
+          <div class="step-row"><span class="step-num">3</span><span>Tap <strong>Add to Home Screen</strong></span></div>
+          <div class="divider-line"></div>
+          <div class="step-row"><span class="step-num">4</span><span>Tap <strong>Add</strong> — done! 🎉</span></div>
+        </div>
+
+        <div class="section-label">ABOUT</div>
+        <div class="card">
+          <div class="about-row"><span>App</span><span>VocabNotes</span></div>
+          <div class="divider-line"></div>
+          <div class="about-row"><span>AI Model</span><span>Llama 3.3 70B (Groq)</span></div>
+          <div class="divider-line"></div>
+          <div class="about-row"><span>Storage</span><span>Airtable + IndexedDB</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /#app -->
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

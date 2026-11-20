@@ -1050,9 +1050,21 @@ async function init() {
   setupSettings();
 
   // 3. Retention features
+
+  // ── Service Worker Registration ─────────────────────────────────────
+  function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('Service worker registered', reg))
+          .catch(err => console.error('Service worker registration failed', err));
+      });
+    }
+  }
   updateStreak();
   setupInstallPrompt();
   setupNotificationSettings();
+  registerServiceWorker();
   setupDailyNotification();
   setTimeout(playDailyWord, 1600); // slight delay for voices to load
 

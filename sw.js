@@ -40,20 +40,42 @@ self.addEventListener('fetch', (e) => {
 });
 
 // ── Push Notifications ───────────────────────────────────────
+
 self.addEventListener('push', (e) => {
-  const data = e.data ? e.data.json() : {};
+  // Attempt to parse JSON payload; if it fails, treat raw text as title.
+  let data = {};
+  if (e.data) {
+    try {
+      data = e.data.json();
+    } catch (_) {
+      // Fallback: use raw text payload as title.
+      return e.waitUntil(
+        e.data.text().then(txt => {
+          self.registration.showNotification(txt, {
+            body: "Time to review today's word!",
+            icon: './icons/icon-192.png',
+            badge: './icons/icon-192.png',
+            tag: 'vocabnotes-daily',
+            renotify: true,
+            data: { url: './' }
+          });
+        })
+      );
+    }
+  }
+  const title = data.title || '📚 VocabNotes';
+  const body = data.body || "Time to review today's word!";
   e.waitUntil(
-    self.registration.showNotification(data.title || '📚 VocabNotes', {
-      body      : data.body || "Time to review today's word!",
-      icon      : './icons/icon-192.png',
-      badge     : './icons/icon-192.png',
-      tag       : 'vocabnotes-daily',
-      renotify  : true,
-      data      : { url: './' },
+    self.registration.showNotification(title, {
+      body,
+      icon: './icons/icon-192.png',
+      badge: './icons/icon-192.png',
+      tag: 'vocabnotes-daily',
+      renotify: true,
+      data: { url: './' }
     })
   );
 });
-
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
   e.waitUntil(

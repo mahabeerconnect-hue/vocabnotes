@@ -48,19 +48,36 @@ self.addEventListener('push', (e) => {
     try {
       data = e.data.json();
     } catch (_) {
-      // Fallback: use raw text payload as title.
-      return e.waitUntil(
-        e.data.text().then(txt => {
+      // Fallback: handle raw text payload which may be synchronous or a Promise.
+      const maybe = e.data.text();
+      if (maybe && typeof maybe.then === 'function') {
+        // Asynchronous – wait for the promise.
+        return e.waitUntil(
+          maybe.then(txt => {
+            self.registration.showNotification(txt, {
+              body: "Time to review today's word!",
+              icon: './icons/icon-192.png',
+              badge: './icons/icon-192.png',
+              tag: 'vocabnotes-daily',
+              renotify: true,
+              data: { url: './' },
+            });
+          })
+        );
+      } else {
+        // Synchronous string.
+        const txt = maybe || '';
+        return e.waitUntil(
           self.registration.showNotification(txt, {
             body: "Time to review today's word!",
             icon: './icons/icon-192.png',
             badge: './icons/icon-192.png',
             tag: 'vocabnotes-daily',
             renotify: true,
-            data: { url: './' }
-          });
-        })
-      );
+            data: { url: './' },
+          })
+        );
+      }
     }
   }
   const title = data.title || '📚 VocabNotes';
